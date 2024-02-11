@@ -1,0 +1,94 @@
+import pygame
+import random
+
+# Initialize Pygame
+pygame.init()
+
+# Set up the screen
+WIDTH, HEIGHT = 800, 600
+SCREEN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Pong")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+# Define the paddles
+PADDLE_WIDTH, PADDLE_HEIGHT = 10, 100
+PADDLE_SPEED = 5
+LEFT_PADDLE_POS = (50, HEIGHT // 2 - PADDLE_HEIGHT // 2)
+RIGHT_PADDLE_POS = (WIDTH - 50 - PADDLE_WIDTH, HEIGHT // 2 - PADDLE_HEIGHT // 2)
+
+# Define the ball
+BALL_SIZE = 10
+BALL_SPEED_X = 4
+BALL_SPEED_Y = 4
+
+# Initialize paddle positions
+left_paddle_rect = pygame.Rect(LEFT_PADDLE_POS[0], LEFT_PADDLE_POS[1], PADDLE_WIDTH, PADDLE_HEIGHT)
+right_paddle_rect = pygame.Rect(RIGHT_PADDLE_POS[0], RIGHT_PADDLE_POS[1], PADDLE_WIDTH, PADDLE_HEIGHT)
+
+# Initialize ball position and speed
+ball_rect = pygame.Rect(WIDTH // 2 - BALL_SIZE // 2, HEIGHT // 2 - BALL_SIZE // 2, BALL_SIZE, BALL_SIZE)
+ball_speed = [random.choice([-1, 1]) * BALL_SPEED_X, random.choice([-1, 1]) * BALL_SPEED_Y]
+
+# Function to move the computer-controlled paddle
+def move_computer_paddle():
+    if ball_rect.centery < right_paddle_rect.centery:
+        right_paddle_rect.move_ip(0, -PADDLE_SPEED)
+    elif ball_rect.centery > right_paddle_rect.centery:
+        right_paddle_rect.move_ip(0, PADDLE_SPEED)
+
+# Main game loop
+running = True
+while running:
+    # Handle events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Move paddles
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] and left_paddle_rect.top > 0:
+        left_paddle_rect.move_ip(0, -PADDLE_SPEED)
+    if keys[pygame.K_s] and left_paddle_rect.bottom < HEIGHT:
+        left_paddle_rect.move_ip(0, PADDLE_SPEED)
+
+    # Move the computer-controlled paddle
+    if ball_speed[0] > 0:  # Only move if the ball is moving towards the computer's side
+        move_computer_paddle()
+
+    # Move ball
+    ball_rect.move_ip(ball_speed[0], ball_speed[1])
+
+    # Ball collision with paddles
+    if ball_rect.colliderect(left_paddle_rect) or ball_rect.colliderect(right_paddle_rect):
+        ball_speed[0] = -ball_speed[0]
+
+    # Ball collision with top and bottom walls
+    if ball_rect.top <= 0 or ball_rect.bottom >= HEIGHT:
+        ball_speed[1] = -ball_speed[1]
+
+    # Ball out of bounds
+    if ball_rect.left <= 0 or ball_rect.right >= WIDTH:
+        # Reset ball position
+        ball_rect.center = (WIDTH // 2, HEIGHT // 2)
+        # Randomize ball speed
+        ball_speed = [random.choice([-1, 1]) * BALL_SPEED_X, random.choice([-1, 1]) * BALL_SPEED_Y]
+
+    # Clear the screen
+    SCREEN.fill(BLACK)
+
+    # Draw paddles and ball
+    pygame.draw.rect(SCREEN, WHITE, left_paddle_rect)
+    pygame.draw.rect(SCREEN, WHITE, right_paddle_rect)
+    pygame.draw.ellipse(SCREEN, WHITE, ball_rect)
+
+    # Update the display
+    pygame.display.flip()
+
+    # Cap the frame rate
+    pygame.time.Clock().tick(60)
+
+# Quit Pygame
+pygame.quit()
